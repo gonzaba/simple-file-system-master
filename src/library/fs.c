@@ -26,26 +26,50 @@ void debug(Disk *disk) {
     
     // Read Inode blocks
     int numberOfInodeBlocks = block.Super.InodeBlocks;
-    for(int inodeBlock=1; inodeBlock <= numberOfInodeBlocks;inodeBlock++){
-        disk->readDisk(disk,inodeBlock,block.Data);
-        for(unsigned int currentInode=0;currentInode<INODES_PER_BLOCK;currentInode++){
-            Inode inode = block.Inodes[currentInode];
-            if(inode.Valid==0)
-                continue;
-            printf("Inode %d:\n",currentInode);
-            printf("    size: %u bytes\n", inode.Size);
-            printf("    direct blocks:");
-            for(unsigned int directBlock=0; directBlock < POINTERS_PER_INODE; directBlock++){
-                    if(inode.Direct[directBlock]){
-                        printf(" %u",inode.Direct[directBlock]);
+
+    for(int i=1; i <= numberOfInodeBlocks;i++){
+
+        Block block1;
+
+        disk->readDisk(disk,i,block1.Data);
+        
+        for(int j=0; j<INODES_PER_BLOCK;j++){
+
+            if(block1.Inodes[j].Valid==1){
+                printf("Inode %d:\n",j);
+                printf("    size: %u bytes\n", block1.Inodes[j].Size);
+                printf("    direct blocks:");
+
+                for(int current=0; current <POINTERS_PER_INODE;current++){
+                    if(block1.Inodes[j].Direct[current]){
+                        printf(" %u", block1.Inodes[j].Direct[current]);
                     }
+                }
+
+                if(block1.Inodes[j].Indirect){
+                    Block block2;
+
+                    disk->readDisk(disk,block1.Inodes[j].Indirect,block2.Data);
+
+					
+                    printf("\n    indirect block: %d\n", block1.Inodes[j].Indirect);
+                    printf("    indirect data blocks:");
+                    
+                    for(int k = 0; k < POINTERS_PER_BLOCK; k++){
+                        if(block2.Pointers[k]) printf(" %d", block2.Pointers[k]);
+                    }
+                       
+                  
+                }
+                printf("\n");
+
             }
-            printf("\n");
         }
-            
+
     }
     
-}
+    
+}//end of debug
 
 // Format file system ----------------------------------------------------------
 
